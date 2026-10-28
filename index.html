@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#13605a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Logbuch">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Weiterbildungs-Logbuch Anästhesiologie</title>
+<style>
+:root{
+  --bg:#f3f6f5; --card:#ffffff; --text:#18302d; --muted:#5d716e; --line:#dbe5e3;
+  --pri:#1b7a73; --pri-d:#13605a; --on-pri:#ffffff; --pri-soft:#e1f1ef;
+  --ok:#2b8a57; --ok-soft:#e3f4ea; --warn:#9a5b00; --warn-soft:#fff2d9; --danger:#b3372f;
+  --shadow:0 1px 2px rgba(20,50,46,.08),0 4px 14px rgba(20,50,46,.06);
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1615; --card:#162220; --text:#e5efed; --muted:#97aeaa; --line:#25403c;
+    --pri:#4cbfb5; --pri-d:#7fd6cd; --on-pri:#06201d; --pri-soft:#173b37;
+    --ok:#58c487; --ok-soft:#14301f; --warn:#f0b24a; --warn-soft:#3b2d12; --danger:#ef8179;
+    --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;line-height:1.25}
+.top{background:#13605a;color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
+.top h1{font-size:1.1rem;font-weight:650}
+.top p{margin:2px 0 0;font-size:.82rem;opacity:.9}
+.wrap{max-width:780px;margin:0 auto;padding:14px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
+.card h2{font-size:1.05rem;margin-bottom:8px}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.tiny{font-size:.78rem}
+
+/* Navigation */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom);z-index:20}
+.tabs button{background:none;border:0;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:.72rem;min-height:58px;cursor:pointer}
+.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-current="page"]{color:var(--pri);font-weight:650}
+.tabs button[aria-current="page"] svg{stroke-width:2.2}
+
+/* Buttons */
+.btn{border:1px solid var(--line);background:var(--card);border-radius:12px;min-height:48px;padding:0 16px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--on-pri)}
+.btn.soft{background:var(--pri-soft);border-color:transparent;color:var(--pri-d)}
+.btn.danger{color:var(--danger)}
+.btn.sm{min-height:44px;min-width:44px;padding:0 12px}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.45;cursor:default}
+.plus{min-width:72px;font-size:1.1rem}
+:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+
+/* Felder */
+label.f{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px}
+input[type=text],input[type=date],input[type=number],input[type=search],select,textarea{width:100%;min-height:48px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:8px 12px}
+textarea{min-height:80px}
+.filters{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px}
+@media(min-width:620px){.filters.cols{grid-template-columns:2fr 2fr auto}}
+.chk{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 4px;cursor:pointer}
+.chk input{width:22px;height:22px;accent-color:var(--pri)}
+
+/* Tagesleiste */
+.daybar{position:sticky;top:0;z-index:10;background:var(--bg);padding:10px 0 8px;display:grid;grid-template-columns:48px 1fr 48px auto;gap:8px;align-items:center}
+.daybar input{text-align:center;font-weight:600}
+.daysum{font-size:.9rem;color:var(--muted);margin:2px 2px 10px}
+
+/* Fortschritt */
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--pri);border-radius:99px;transition:width .25s}
+.bar.ok>i{background:var(--ok)}
+.bar.lg{height:14px}
+.big{font-size:2.1rem;font-weight:700;line-height:1}
+.stat{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin:8px 0 6px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.kv div{background:var(--bg);border-radius:10px;padding:8px 10px;font-size:.85rem}
+.kv b{display:block;font-size:1.05rem}
+
+/* Kategorien */
+details.cat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+details.cat>summary{list-style:none;cursor:pointer;padding:12px 16px;min-height:56px;display:block}
+details.cat>summary::-webkit-details-marker{display:none}
+.chead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.chead h3{font-size:.98rem;font-weight:650}
+.chead .pct{font-weight:700;color:var(--pri);white-space:nowrap}
+.chead .pct.ok{color:var(--ok)}
+.cmeta{font-size:.78rem;color:var(--muted);margin:3px 0 7px}
+.chev{display:inline-block;transition:transform .15s;margin-right:4px;color:var(--muted)}
+details[open] .chev{transform:rotate(90deg)}
+.grp{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:10px 16px 4px;background:var(--bg);border-top:1px solid var(--line)}
+
+/* Zeilen */
+.row{padding:12px 16px;border-top:1px solid var(--line)}
+.row.sub{padding-left:34px;background:var(--bg);background:color-mix(in srgb,var(--bg) 55%,transparent)}
+.row.click{cursor:pointer}
+.rtitle{font-size:.95rem}
+.tag{display:inline-block;font-size:.68rem;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:6px;vertical-align:1px;background:var(--pri-soft);color:var(--pri-d)}
+.tag.K{background:#e9e6f7;color:#4a3d94}
+@media(prefers-color-scheme:dark){.tag.K{background:#2a2550;color:#b9b0f5}}
+.rmeta{font-size:.82rem;color:var(--muted);margin-top:3px}
+.rmeta b{color:var(--text)}
+.rbottom{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap}
+.rbottom .l{flex:1 1 150px;min-width:130px}
+.rctl{display:flex;align-items:center;gap:6px}
+.cnt{min-width:30px;text-align:center;font-weight:700;font-size:1.1rem}
+.done-badge{color:var(--ok);font-weight:650}
+.tog{min-width:150px}
+.tog.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.note{font-style:italic}
+.pill{display:inline-block;font-size:.72rem;border-radius:99px;padding:1px 8px;background:var(--pri-soft);color:var(--pri-d);margin-left:4px}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+
+/* Verlauf */
+.dayhead{font-weight:650;margin:14px 2px 6px;display:flex;justify-content:space-between}
+.entry{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:6px}
+.entry .n{background:var(--pri-soft);color:var(--pri-d);font-weight:700;border-radius:10px;min-width:44px;text-align:center;padding:6px 4px}
+.entry .t{font-size:.92rem}
+.entry .c{font-size:.75rem;color:var(--muted)}
+
+/* Banner / Toast */
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:.9rem}
+.banner .btn,.info .btn{margin:8px 8px 0 0;min-height:44px}
+.info{background:var(--pri-soft);color:var(--text);border-radius:12px;padding:10px 12px;font-size:.85rem;margin-bottom:12px}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;display:flex;justify-content:center;pointer-events:none}
+#toast .t{pointer-events:auto;background:#22312f;color:#fff;border-radius:12px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:560px;font-size:.92rem}
+#toast button{background:none;border:0;color:#8fe3d9;font-weight:700;min-height:40px;padding:0 8px;cursor:pointer}
+
+/* Dialoge */
+dialog{border:0;border-radius:18px;padding:0;width:min(560px,94vw);max-height:92vh;background:var(--card);color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(5,15,14,.5)}
+.dbody{padding:18px;max-height:90vh;overflow:auto}
+.dbody h2{font-size:1.1rem;margin-bottom:4px}
+.dact{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.dact .btn{flex:1 1 120px}
+.stepper{display:grid;grid-template-columns:52px 1fr 52px;gap:8px}
+.stepper input{text-align:center;font-weight:700;font-size:1.2rem}
+
+#report{display:none}
+@media print{
+  body{background:#fff;color:#000;padding:0;font-size:10.5pt}
+  body>*:not(#report){display:none!important}
+  #report{display:block!important}
+  #report h1{font-size:16pt;margin:0 0 2pt}
+  #report h2{font-size:12pt;margin:14pt 0 4pt;border-bottom:1px solid #444;padding-bottom:2pt;break-after:avoid}
+  #report table{width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:6pt}
+  #report th,#report td{border:1px solid #999;padding:3pt 5pt;vertical-align:top;text-align:left}
+  #report th{background:#e8e8e8}
+  #report tr{break-inside:avoid}
+  #report .r{text-align:right;white-space:nowrap}
+  #report .sub td:first-child{padding-left:16pt}
+  #report .sig{margin-top:30pt;display:flex;gap:30pt}
+  #report .sig div{flex:1;border-top:1px solid #000;padding-top:3pt;font-size:9pt}
+}
+</style>
+</head>
+<body>
+<noscript><div class="wrap"><div class="card">Diese App benötigt JavaScript. Bitte die Datei in einem aktuellen Browser (Chrome, Safari, Firefox, Edge) öffnen.</div></div></noscript>
+
+<header class="top">
+  <h1>Weiterbildungs-Logbuch Anästhesiologie</h1>
+  <p>Facharzt · Weiterbildungsordnung Hessen 2020 (Stand: Änderung vom 23.11.2024)</p>
+</header>
+
+<main class="wrap" id="app"></main>
+
+<nav class="tabs" aria-label="Hauptnavigation">
+  <button data-act="go" data-view="erfassen"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Erfassen</button>
+  <button data-act="go" data-view="fortschritt"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Fortschritt</button>
+  <button data-act="go" data-view="verlauf"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Verlauf</button>
+  <button data-act="go" data-view="zeiten"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Zeiten</button>
+  <button data-act="go" data-view="daten"><svg viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg>Daten</button>
+</nav>
+
+<dialog id="dlg"></dialog>
+<dialog id="dlgc"></dialog>
+<div id="toast" aria-live="polite"></div>
+<div id="report"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ========== WBO-Daten (aus WBO Hessen 2020, S. 20–21 und S. 27–30) ========== */
+const DATA = [{"id":"allg","title":"Allgemeine Inhalte der Weiterbildung für Abschnitt B","ref":"WBO S. 20–21","groups":[{"title":"Grundlagen","items":[{"id":"allg-01","k":"K","t":"Ethische, wissenschaftliche und rechtliche Grundlagen ärztlichen Handelns"},{"id":"allg-02","k":"F","t":"Vertiefung und Stärkung berufsspezifischer Haltungen zum Wohl des Patienten, die auf ärztlicher Expertise, anerkannten ethischen Grundsätzen, Kommunikativität, Kollegialität und präventivem Engagement beruhen"},{"id":"allg-03","k":"K","t":"Grundlagen ärztlicher Begutachtung"},{"id":"allg-04","k":"F","t":"Maßnahmen der Qualitätssicherung und des Qualitätsmanagements einschließlich des Fehler- und Risikomanagements sowie Anwendung von Leit- und Richtlinien"},{"id":"allg-05","k":"K","t":"Grundlagen der Transplantationsmedizin und Organisation der Organspende"},{"id":"allg-06","k":"K","t":"Ökonomische und strukturelle Aspekte des Gesundheitswesens"},{"id":"allg-07","k":"F","t":"Hygienemaßnahmen"},{"id":"allg-08","k":"F","t":"Ärztliche Leichenschau"}]},{"title":"Patientenbezogene Inhalte","items":[{"id":"allg-09","k":"F","t":"Management (nosokomialer) Infektionen mit multiresistenten Erregern"},{"id":"allg-10","k":"F","t":"Beratung über präventive und rehabilitative Maßnahmen einschließlich der Verordnung von Heil- und Hilfsmitteln sowie Indikationsstellung und Überwachung physikalischer Therapiemaßnahmen"},{"id":"allg-11","k":"F","t":"Situationsgerechte ärztliche Gesprächsführung einschließlich der Beratung von Angehörigen"},{"id":"allg-12","k":"F","t":"Aufklärung und Befunddokumentation"},{"id":"allg-13","k":"F","t":"Durchführung einer strukturierten Patientenübergabe"},{"id":"allg-14","k":"K","t":"Psychosomatische Grundlagen"},{"id":"allg-15","k":"K","t":"Psychosoziale, umweltbedingte und interkulturelle Einflüsse auf die Gesundheit sowie Zusammenhang zwischen Krankheit und sozialem Status"},{"id":"allg-16","k":"K","t":"Auswirkungen des Klimawandels auf die Gesundheit"},{"id":"allg-17","k":"K","t":"Besondere Situationen bei der Betreuung von Schwerstkranken und Sterbenden"},{"id":"allg-18","k":"F","t":"Therapieentscheidungen am Lebensende einschließlich Angehörigengespräche"},{"id":"allg-19","k":"K","t":"Symptome der Verletzung von körperlicher und/oder psychischer Integrität"},{"id":"allg-20","k":"F","t":"Beurteilung von Besonderheiten der Erkrankungen und Einschränkungen im Alter"},{"id":"allg-21","k":"K","t":"Genderaspekte und Aspekte der Geschlechtsidentität"},{"id":"allg-22","k":"K","t":"Digitalisierung im Kontext ärztlichen Handelns (Interaktion, Diagnostik, Therapiemanagement)"},{"id":"allg-23","k":"F","t":"Beurteilung und Einsatz digitaler Anwendungen für Anamnese, Diagnostik und Therapie"}]},{"title":"Behandlungsbezogene Inhalte","items":[{"id":"allg-24","k":"K","t":"Ätiologie, Pathophysiologie und Pathogenese von Krankheiten"},{"id":"allg-25","k":"F","t":"Medizinische Notfallsituationen, insbesondere lebensrettende Sofortmaßnahmen"},{"id":"allg-26","k":"K","t":"Seltene Erkrankungen"},{"id":"allg-27","k":"F","t":"Pharmakotherapie, Pharmakovigilanz und Arzneimitteltherapiesicherheit sowie Arzneimittelmissbrauch"},{"id":"allg-28","k":"F","t":"Schmerzprävention und allgemeine Schmerztherapie bei akuten und chronischen Schmerzen"},{"id":"allg-29","k":"F","t":"Interdisziplinäre und interprofessionelle Zusammenarbeit"},{"id":"allg-30","k":"F","t":"Impfwesen/Durchführung von Schutzimpfungen"},{"id":"allg-31","k":"K","t":"Besonderheiten bei der Betreuung von Menschen mit Behinderung"}]},{"title":"Technisch-diagnostische Inhalte im Zusammenhang mit gebietsspezifischen Fragestellungen","items":[{"id":"allg-32","k":"K","t":"Präanalytik und labortechnisch gestützte Nachweisverfahren"},{"id":"allg-33","k":"F","t":"Point-of-Care-Diagnostik mit visueller oder apparativer Ausstattung"},{"id":"allg-34","k":"F","t":"Indikationsstellung und Befundinterpretation des krankheitsbezogenen Basislabors"},{"id":"allg-35","k":"F","t":"Interdisziplinäre Indikationsstellung zur weiterführenden Diagnostik einschließlich der Differentialindikation und Interpretation bildgebender Befunde"}]}]},{"id":"uebergr","title":"Übergreifende Inhalte der Facharzt-Weiterbildung Anästhesiologie","ref":"WBO S. 27","groups":[{"title":"","items":[{"id":"uebergr-01","k":"K","t":"Wesentliche Gesetze, Verordnungen und Richtlinien"},{"id":"uebergr-02","k":"F","t":"Basisbehandlung palliativmedizinisch zu versorgender Patienten"}]}]},{"id":"praeanae","title":"Präanästhesiologische Vorbereitung","ref":"WBO S. 27","groups":[{"title":"","items":[{"id":"praeanae-01","k":"F","t":"Aufklärung von Patienten über Risiken von Anästhesieverfahren und -medikamenten sowie Einholung der rechtsgültigen Einwilligung"},{"id":"praeanae-02","k":"F","t":"Präanästhesiologische Risikoevaluation, insbesondere Prädiktoren für schwierige Atemwege und schwierige Beatmung"},{"id":"praeanae-03","k":"F","t":"Identifikation und Umgang mit relevanten kardiovaskulären pulmonalen, neurologischen und muskulären Risikofaktoren"},{"id":"praeanae-04","k":"F","t":"Auswahl eines geeigneten Anästhesieverfahrens einschließlich","sub":[{"id":"praeanae-05","k":"F","t":"präanästhesiologischer Vorbereitung unter Berücksichtigung einer Dauermedikation"},{"id":"praeanae-06","k":"F","t":"medikamentöser Prämedikation"},{"id":"praeanae-07","k":"F","t":"erforderlichem Monitoring"},{"id":"praeanae-08","k":"F","t":"Berücksichtigung des Erfordernisses präanästhesiologischer Nüchternheit"}]}]}]},{"id":"verfahren","title":"Anästhesiologische Verfahren und Techniken","ref":"WBO S. 27–28","groups":[{"title":"","items":[{"id":"verfahren-01","k":"F","t":"Atemwegsmanagement, technische Maßnahmen zur Behandlung des einfachen und des schwierigen Atemweges einschließlich der schwierigen Intubation (Difficult Airway), davon","sub":[{"id":"verfahren-02","k":"F","t":"fiberoptische Techniken einschließlich fiberoptische Intubationen, davon können bis zu 50% durch Simulation erfolgen","soll":25,"sim":true},{"id":"verfahren-03","k":"F","t":"videoassistierte Intubationsverfahren","soll":20}]},{"id":"verfahren-04","k":"F","t":"Anästhesiologische Überwachung"},{"id":"verfahren-05","k":"F","t":"Postanästhesiologische Patientenversorgung"},{"id":"verfahren-06","k":"K","t":"Anästhesierelevante Ultraschallverfahren, insbesondere Notfallsonographie, transösophageale und transthorakale Echokardiographie"},{"id":"verfahren-07","k":"F","t":"Durchführung anästhesierelevanter Ultraschallverfahren bei unterschiedlichen Maßnahmen, insbesondere bei ZVK-Anlage, Pleurapunktion, sonographisch gesteuerter Gefäßpunktion und Regionalanästhesie","soll":50},{"id":"verfahren-08","k":"F","t":"Allgemeinanästhesien und intraoperative Beatmung einschließlich Einleitung, intraoperative Überwachung, Ausleitung, postoperative Patientenversorgung, postoperative Schmerztherapie"},{"id":"verfahren-09","k":"F","t":"Durchführung von Anästhesieverfahren, davon","soll":1800,"sub":[{"id":"verfahren-10","k":"F","t":"bei abdominellen Eingriffen","soll":300},{"id":"verfahren-11","k":"F","t":"bei Patienten mit mindestens ASA 3-Klassifikation","soll":100}]}]}]},{"id":"neuro","title":"Anästhesie bei neurochirurgischen und neurointerventionellen Eingriffen","ref":"WBO S. 28","groups":[{"title":"","items":[{"id":"neuro-01","k":"K","t":"Risiken und Vorteile unterschiedlicher anästhesiologischer Verfahren bei neurochirurgischen und neurointerventionellen Eingriffen"},{"id":"neuro-02","k":"K","t":"Prinzipien und Besonderheiten der Anästhesiologie bei intrakraniellen Eingriffen"},{"id":"neuro-03","k":"F","t":"Mitwirkung bei Anästhesien für intrakranielle Eingriffe","soll":25}]}]},{"id":"kinder","title":"Kinderanästhesie","ref":"WBO S. 28","groups":[{"title":"","items":[{"id":"kinder-01","k":"K","t":"Besonderheiten der pädiatrischen Anästhesiologie einschließlich Monitoring, Atemwegsmanagement, intravenöse und intraossäre Zugänge, Narkoseeinleitung, Narkoseaufrechterhaltung, Narkoseausleitung, postanästhesiologische Versorgung, Flüssigkeits- und Volumentherapie"},{"id":"kinder-02","k":"F","t":"Durchführung von Anästhesien bei Säuglingen und Kleinkindern bis zum vollendeten 5. Lebensjahr","soll":50},{"id":"kinder-03","k":"F","t":"Reanimationstraining"}]}]},{"id":"geburt","title":"Anästhesie bei Schwangeren und in der Geburtshilfe","ref":"WBO S. 28","groups":[{"title":"","items":[{"id":"geburt-01","k":"F","t":"Durchführung von Allgemeinanästhesien, Regionalanästhesien und perioperativer Behandlung bei Schwangeren"},{"id":"geburt-02","k":"F","t":"Schmerztherapie in der Geburtshilfe einschließlich bei Kaiserschnitten"},{"id":"geburt-03","k":"F","t":"Durchführung von Anästhesieverfahren in der Geburtshilfe, davon","soll":50,"sub":[{"id":"geburt-04","k":"F","t":"bei Kaiserschnitten","soll":25}]}]}]},{"id":"thorax","title":"Anästhesie bei Thoraxeingriffen","ref":"WBO S. 28–29","groups":[{"title":"","items":[{"id":"thorax-01","k":"K","t":"Prinzipien und Besonderheiten der Anästhesiologie bei thoraxchirurgischen Eingriffen"},{"id":"thorax-02","k":"K","t":"Perioperative Schmerztherapie einschließlich epiduraler, paravertebraler und intervertebraler Blockaden in der Thoraxchirurgie"},{"id":"thorax-03","k":"F","t":"Mitwirkung bei Anästhesien für intrathorakale Eingriffe","soll":25}]}]},{"id":"kardio","title":"Kardiovaskuläre Anästhesie","ref":"WBO S. 29","groups":[{"title":"","items":[{"id":"kardio-01","k":"K","t":"Prinzipien und Besonderheiten der Anästhesiologie bei kardiochirurgischen und herznahen gefäßchirurgischen Eingriffen, insbesondere des kardiopulmonalen Bypasses und anderer kreislaufunterstützender Maßnahmen"}]}]},{"id":"kopfhals","title":"Anästhesie bei Operationen im Kopf-Hals-Bereich","ref":"WBO S. 29","groups":[{"title":"","items":[{"id":"kopfhals-01","k":"F","t":"Anästhesien bei Eingriffen im Kopf-Hals-Bereich auch mit schwierigem Zugang zum Atemweg in der Augenheilkunde, Hals-Nasen-Ohrenheilkunde, Mund-Kiefer-Gesichtschirurgie, Neurochirurgie oder Plastischen, Rekonstruktiven und Ästhetischen Chirurgie","soll":100}]}]},{"id":"regio","title":"Regionalanästhesie","ref":"WBO S. 29","groups":[{"title":"","items":[{"id":"regio-01","k":"F","t":"Durchführung rückenmarksnaher Regionalanästhesien einschließlich intraoperativer Überwachung, postoperativer Patientenversorgung, postoperativer Schmerztherapie","soll":50},{"id":"regio-02","k":"F","t":"Durchführung peripher-regionalanästhesiologischer Verfahren einschließlich intraoperativer Überwachung, postoperativer Patientenversorgung, postoperativer Schmerztherapie","soll":50}]}]},{"id":"ambulant","title":"Anästhesie bei ambulanten Patienten","ref":"WBO S. 29","groups":[{"title":"","items":[{"id":"ambulant-01","k":"K","t":"Mindestanforderungen für die Anwendung anästhesiologischer Verfahren bei ambulanten Eingriffen"},{"id":"ambulant-02","k":"F","t":"Durchführung von Anästhesien bei ambulanten Eingriffen unter Beachtung der Rahmenbedingungen und des spezifischen Risikos sowie Sicherstellung der perioperativen Versorgung","soll":50}]}]},{"id":"ausserhalb","title":"Anästhesiologische Verfahren außerhalb des Operationssaales","ref":"WBO S. 29","groups":[{"title":"","items":[{"id":"ausserhalb-01","k":"F","t":"Gewährleisten von Sicherheitsstandards im Zusammenhang mit anästhesiologischen Verfahren bei CT-und MRT-Untersuchungen oder anderen minimal-invasiven und diagnostischen Eingriffen"},{"id":"ausserhalb-02","k":"F","t":"Transport des Patienten zu Untersuchungen und Eingriffen"}]}]},{"id":"intensiv","title":"Intensivmedizin","ref":"WBO S. 29–30","groups":[{"title":"","items":[{"id":"intensiv-01","k":"F","t":"Diagnostik und Therapie vital bedrohlicher Erkrankungen und Zustände auf einer Intensivstation oder Intermediate Care Station, insbesondere bei","sub":[{"id":"intensiv-02","k":"F","t":"respiratorischer Insuffizienz"},{"id":"intensiv-03","k":"F","t":"kardialer Insuffizienz"},{"id":"intensiv-04","k":"F","t":"Ein- und Mehrorganversagen"},{"id":"intensiv-05","k":"F","t":"Delir"},{"id":"intensiv-06","k":"F","t":"endokrinen Störungen"},{"id":"intensiv-07","k":"F","t":"erhöhtem Hirndruck"},{"id":"intensiv-08","k":"F","t":"Sepsis"},{"id":"intensiv-09","k":"F","t":"Schock"},{"id":"intensiv-10","k":"F","t":"Trauma/Polytrauma"}]},{"id":"intensiv-11","k":"F","t":"Prävention, Diagnostik, Therapie und Management von Infektionen"},{"id":"intensiv-12","k":"F","t":"Intensivmedizinische Behandlung von Patienten mit Funktionsstörungen von mindestens zwei vitalen Organsystemen","soll":100},{"id":"intensiv-13","k":"F","t":"Analgosedierung von intensivmedizinischen Patienten"},{"id":"intensiv-14","k":"F","t":"Atemunterstützende Maßnahmen bei nicht-intubierten Patienten, differenzierte Beatmungstechniken einschließlich Beatmungsentwöhnung bei langzeitbeatmeten Patienten","soll":50},{"id":"intensiv-15","k":"F","t":"Differenzierte Flüssigkeits- und Volumentherapie einschließlich Transfusions- und Blutersatztherapie"},{"id":"intensiv-16","k":"F","t":"Enterale und parenterale Ernährung, Erstellung eines Ernährungsplans sowie Therapie von Stoffwechselentgleisungen"},{"id":"intensiv-17","k":"F","t":"Punktions- und Katheterisierungstechniken, auch sonographisch gesteuert, davon","sub":[{"id":"intensiv-18","k":"F","t":"zentralvenöse Zugänge","soll":30},{"id":"intensiv-19","k":"F","t":"arterielle Zugänge","soll":30},{"id":"intensiv-20","k":"F","t":"Pleurapunktionen, Pleuradrainagen","soll":5}]},{"id":"intensiv-21","k":"F","t":"Tracheo- und Bronchoskopien","soll":25},{"id":"intensiv-22","k":"K","t":"Perkutane Tracheotomien"}]}]},{"id":"schmerz","title":"Schmerzmedizinische Verfahren","ref":"WBO S. 30","groups":[{"title":"","items":[{"id":"schmerz-01","k":"F","t":"Nervenblockaden, insbesondere zur perioperativen regionalen Schmerztherapie einschließlich Katheterverfahren"},{"id":"schmerz-02","k":"F","t":"Verfahren zur pharmakologischen und nicht-pharmakologischen Schmerztherapie"},{"id":"schmerz-03","k":"K","t":"Grundlagen der Behandlung chronischer Schmerzen"}]}]},{"id":"notfall","title":"Notfall- und Zwischenfallmanagement, Trauma und Verbrennungen, Rettungswesen","ref":"WBO S. 30","groups":[{"title":"","items":[{"id":"notfall-01","k":"F","t":"Reanimation von Patienten aller Altersgruppen"},{"id":"notfall-02","k":"F","t":"Transportbegleitung von Intensivpatienten einschließlich der Vorbereitung zum Interhospitaltransfer"},{"id":"notfall-03","k":"F","t":"Ossärer Zugang"},{"id":"notfall-04","k":"F","t":"Erstversorgung beim Traumapatienten einschließlich Brandverletzten"},{"id":"notfall-05","k":"F","t":"Zwischenfalltraining","soll":5}]}]}];
+
+const APP_ID = 'wb-anaesthesiologie-hessen';
+const APP_VERSION = '1.0.0';
+let deferredPrompt = null;
+const KEY = 'wb_anaesthesiologie_hessen_v1';
+const KIND = {K:'Kenntnisse', F:'Erfahrungen und Fertigkeiten'};
+const SEG_TYPES = {an:'Anästhesiologie', ik:'Intensivmedizin', ag:'Anderes Gebiet (Kompetenzerwerb)'};
+const REQ = {total:60, icu:12, other:12};
+
+/* ========== Hilfsfunktionen ========== */
+const $ = (s,r=document)=>r.querySelector(s);
+const esc = s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n=>String(n).padStart(2,'0');
+const iso = d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const todayISO = ()=>iso(new Date());
+const parseISO = s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);};
+const fmtD = s=>{if(!s)return '';const p=s.split('-');return p[2]+'.'+p[1]+'.'+p[0];};
+const fmtWD = s=>parseISO(s).toLocaleDateString('de-DE',{weekday:'short'});
+const nf0 = new Intl.NumberFormat('de-DE');
+const nf1 = new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const addDays = (s,n)=>{const d=parseISO(s);d.setDate(d.getDate()+n);return iso(d);};
+
+/* ========== Flache Struktur ========== */
+const ITEMS=[], BY={}, CATS=DATA, CAT_BY={};
+function reg(it,c,g,parent){
+  it.cat=c.id; it.group=g.title; it.parent=parent?parent.id:null; it.level=parent?1:0; it.children=[];
+  if(parent) parent.children.push(it);
+  ITEMS.push(it); BY[it.id]=it; c.items.push(it);
+}
+CATS.forEach(c=>{
+  c.items=[]; CAT_BY[c.id]=c;
+  c.groups.forEach(g=>g.items.forEach(it=>{reg(it,c,g,null);(it.sub||[]).forEach(s=>reg(s,c,g,it));}));
+});
+
+/* ========== Speicher ========== */
+let storageOK=true;
+function fresh(){return {app:APP_ID,version:1,entries:[],segments:[],settings:{name:'',rollup:true,lastBackup:null}};}
+function validEntry(e){return e&&typeof e.id==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(e.d)&&typeof e.i==='string'&&Number.isFinite(e.n)&&e.n>0;}
+function validSeg(s){return s&&typeof s.id==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s.start)&&SEG_TYPES[s.type];}
+function norm(o){
+  const f=fresh(); if(!o||typeof o!=='object') return f;
+  f.entries=(Array.isArray(o.entries)?o.entries:[]).filter(validEntry).map(e=>({id:e.id,d:e.d,i:e.i,n:Math.floor(e.n),note:String(e.note||''),sim:!!e.sim}));
+  f.segments=(Array.isArray(o.segments)?o.segments:[]).filter(validSeg).map(s=>({id:s.id,type:s.type,dept:String(s.dept||''),boss:String(s.boss||''),start:s.start,end:/^\d{4}-\d{2}-\d{2}$/.test(s.end||'')?s.end:'',gap:Math.max(0,Math.floor(s.gap||0))}));
+  Object.assign(f.settings,{name:String((o.settings&&o.settings.name)||''),rollup:!(o.settings&&o.settings.rollup===false),lastBackup:(o.settings&&o.settings.lastBackup)||null});
+  return f;
+}
+function load(){
+  try{const r=localStorage.getItem(KEY); if(r) return norm(JSON.parse(r));}catch(e){storageOK=false;}
+  return fresh();
+}
+let S=load();
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){storageOK=false;}
+}
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isAndroid=()=>/android/i.test(navigator.userAgent);
+const isStandalone=()=>(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',ev=>{ev.preventDefault();deferredPrompt=ev;try{renderInstall();}catch(e){}});
+window.addEventListener('appinstalled',()=>{deferredPrompt=null;lsSet('wb_inst_dismissed','1');try{renderInstall();}catch(e){}});
+function installBanner(){
+  if(isStandalone()||lsGet('wb_inst_dismissed')) return '';
+  let body='',btn='';
+  if(isIOS()){
+    body='<b>Als App installieren (iPhone/iPad):</b> In Safari auf das Teilen-Symbol (Quadrat mit Pfeil nach oben) tippen und „Zum Home-Bildschirm“ wählen. Das solltest du gleich am Anfang tun: Die installierte App hat einen eigenen Datenspeicher, und Safari löscht Website-Daten nach 7 Tagen ohne Nutzung.';
+  } else if(deferredPrompt){
+    body='<b>Als App installieren:</b> Die App startet dann vom Startbildschirm im Vollbild und funktioniert auch ohne Internet.';
+    btn='<button class="btn pri" data-act="install">Jetzt installieren</button>';
+  } else if(isAndroid()){
+    body='<b>Als App installieren:</b> Im Browser-Menü (drei Punkte) „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen.';
+  } else {
+    body='<b>Als App installieren:</b> Im Browser-Menü oder in der Adressleiste „App installieren“ wählen. Am Handy geht das über „Zum Startbildschirm hinzufügen“.';
+  }
+  return `<div class="info" id="instbox">${body}<br>${btn}<button class="btn" data-act="inst-hide">Hinweis ausblenden</button></div>`;
+}
+function renderInstall(){
+  const el=$('#ibanner'); if(el) el.innerHTML=installBanner();
+  if(view==='fortschritt'||view==='daten'){const b=$('#banner'); if(b) b.innerHTML=backupBanner();}
+}
+
+/* ========== Berechnungen ========== */
+function computeStats(){
+  const st={};
+  ITEMS.forEach(it=>st[it.id]={real:0,sim:0,days:new Set(),first:null,last:null});
+  S.entries.forEach(e=>{
+    const s=st[e.i]; if(!s) return;
+    if(e.sim) s.sim+=e.n; else s.real+=e.n;
+    s.days.add(e.d);
+    if(!s.first||e.d<s.first) s.first=e.d;
+    if(!s.last||e.d>s.last) s.last=e.d;
+  });
+  ITEMS.forEach(it=>{
+    const s=st[it.id];
+    s.simCap=(it.soll&&it.sim)?Math.floor(it.soll*0.5):0;
+    s.simCounted=Math.min(s.sim,s.simCap);
+    s.own=s.real+s.simCounted;
+  });
+  ITEMS.forEach(it=>{
+    const s=st[it.id]; let ist=s.own;
+    if(it.soll&&S.settings.rollup) it.children.forEach(c=>{ist+=st[c.id].own;});
+    s.ist=ist;
+    if(it.soll){s.fehlt=Math.max(0,it.soll-ist);s.done=ist>=it.soll;s.frac=Math.min(1,ist/it.soll);}
+    else{s.done=(s.real+s.sim)>0;s.fehlt=s.done?0:1;s.frac=s.done?1:0;}
+  });
+  return st;
+}
+function aggregate(items,st){
+  const r={n:items.length,sum:0,nR:0,nRd:0,nI:0,nId:0};
+  items.forEach(it=>{
+    const s=st[it.id]; r.sum+=s.frac;
+    if(it.soll){r.nR++; if(s.done) r.nRd++;} else {r.nI++; if(s.done) r.nId++;}
+  });
+  const all=r.n>0&&r.nRd+r.nId===r.n;
+  r.pct=all?100:Math.min(99,Math.floor(r.sum/(r.n||1)*100));
+  r.all=all;
+  return r;
+}
+function segMonths(sg){
+  const s=parseISO(sg.start), t=new Date(); t.setHours(0,0,0,0);
+  let e=sg.end?parseISO(sg.end):t; if(e>t) e=t;
+  if(e<s) return 0;
+  const days=Math.round((e-s)/864e5)+1-(sg.gap||0);
+  return Math.max(0,days/30.4375);
+}
+function timeStats(){
+  let an=0,ik=0,agRaw=0,agSmall=0;
+  S.segments.forEach(sg=>{
+    const m=segMonths(sg);
+    if(sg.type==='an') an+=m; else if(sg.type==='ik') ik+=m;
+    else {if(m>=3) agRaw+=m; else agSmall+=m;}
+  });
+  const ag=Math.min(REQ.other,agRaw);
+  const total=an+ik+ag;
+  return {an,ik,agRaw,agSmall,ag,total,remaining:Math.max(0,REQ.total-total)};
+}
+
+/* ========== UI-Zustand ========== */
+let view='erfassen';
+let selDate=todayISO();
+const ef={q:'',cat:'',open:false};
+const pf={q:'',cat:'',status:'all'};
+const vf={q:'',cat:'',from:'',to:''};
+const openCats=new Set();
+const app=$('#app');
+
+function catOptions(sel){
+  return '<option value="">Alle Kategorien</option>'+CATS.map(c=>`<option value="${c.id}"${sel===c.id?' selected':''}>${esc(c.title)}</option>`).join('');
+}
+function bar(frac,cls){return `<div class="bar ${cls||''}${frac>=1?' ok':''}"><i style="width:${Math.round(frac*100)}%"></i></div>`;}
+
+/* ========== Zeilen ========== */
+function metaText(it,st){
+  const s=st[it.id];
+  if(it.soll){
+    let t=`Ist <b>${nf0.format(s.ist)}</b> / Soll <b>${nf0.format(it.soll)}</b> · `;
+    t+= s.done?'<span class="done-badge">✓ erfüllt</span>':`noch <b>${nf0.format(s.fehlt)}</b>`;
+    if(it.sim&&s.sim>0) t+=` · Simulation: ${s.sim} (max. ${s.simCap} anrechenbar)`;
+    return t;
+  }
+  if(s.done){
+    return `<span class="done-badge">✓ abgezeichnet</span> · erstmals ${fmtD(s.first)}${s.days.size>1?` · ${s.days.size} Tage`:''}`;
+  }
+  return 'offen';
+}
+function todayCount(it){
+  return S.entries.filter(e=>e.i===it.id&&e.d===selDate).reduce((a,e)=>a+e.n,0);
+}
+function rowDay(it,st){
+  const s=st[it.id], tc=todayCount(it);
+  let ctl;
+  if(it.soll){
+    ctl=`<div class="rctl">
+      <button class="btn sm" data-act="dec" data-id="${it.id}" aria-label="Einen Eintrag weniger" ${tc?'':'disabled'}>−</button>
+      <span class="cnt" aria-label="Anzahl am gewählten Tag">${tc}</span>
+      <button class="btn pri plus" data-act="inc" data-id="${it.id}" aria-label="Plus eins">+1</button>
+      <button class="btn sm" data-act="more" data-id="${it.id}" aria-label="Mit Anzahl und Notiz erfassen">⋯</button>
+    </div>`;
+  } else {
+    ctl=`<div class="rctl">
+      <button class="btn tog ${tc?'on':''}" data-act="tog" data-id="${it.id}" aria-pressed="${tc?'true':'false'}">${tc?'✓ Heute abgezeichnet':'Abzeichnen'}</button>
+      <button class="btn sm" data-act="more" data-id="${it.id}" aria-label="Mit Notiz erfassen">⋯</button>
+    </div>`;
+  }
+  return `<div class="row${it.level?' sub':''}">
+    <div class="rtitle click" data-act="detail" data-id="${it.id}" role="button" tabindex="0"><span class="tag ${it.k}" title="${KIND[it.k]}">${it.k}</span>${esc(it.t)}</div>
+    <div class="rbottom"><div class="l"><div class="rmeta">${metaText(it,st)}</div>${it.soll?bar(s.frac):''}</div>${ctl}</div>
+  </div>`;
+}
+function rowProg(it,st){
+  const s=st[it.id];
+  return `<div class="row click${it.level?' sub':''}" data-act="detail" data-id="${it.id}" role="button" tabindex="0">
+    <div class="rtitle"><span class="tag ${it.k}" title="${KIND[it.k]}">${it.k}</span>${esc(it.t)}</div>
+    <div class="rmeta">${metaText(it,st)}</div>${it.soll?bar(s.frac):''}
+  </div>`;
+}
+function matchItem(it,st,f){
+  const s=st[it.id];
+  if(f.cat&&it.cat!==f.cat) return false;
+  if(f.q){const q=f.q.toLowerCase(); if(!(it.t.toLowerCase().includes(q)||CAT_BY[it.cat].title.toLowerCase().includes(q))) return false;}
+  if(f.open&&s.done) return false;
+  if(f.status==='open'&&s.done) return false;
+  if(f.status==='done'&&!s.done) return false;
+  return true;
+}
+function catBlocks(st,f,mode){
+  const rowFn=mode==='day'?rowDay:rowProg;
+  const forceOpen=!!(f.q||f.open||f.status!=='all'&&f.status!==undefined||f.cat);
+  let html='';
+  CATS.forEach(c=>{
+    const items=c.items.filter(it=>matchItem(it,st,f));
+    if(!items.length) return;
+    const a=aggregate(c.items,st);
+    const isOpen=forceOpen||openCats.has(mode+c.id);
+    let inner='',lastG=null;
+    items.forEach(it=>{
+      if(c.groups.length>1&&it.group!==lastG){inner+=`<div class="grp">${esc(it.group)}</div>`;lastG=it.group;}
+      inner+=rowFn(it,st);
+    });
+    const meta=[];
+    if(a.nR) meta.push(`Richtzahlen ${a.nRd}/${a.nR}`);
+    if(a.nI) meta.push(`Inhalte abgezeichnet ${a.nId}/${a.nI}`);
+    html+=`<details class="cat" data-key="${mode+c.id}"${isOpen?' open':''}>
+      <summary><div class="chead"><h3><span class="chev">›</span>${esc(c.title)}</h3><span class="pct${a.all?' ok':''}">${a.pct}%</span></div>
+      <div class="cmeta">${esc(c.ref)} · ${meta.join(' · ')}</div>${bar(a.pct/100)}</summary>${inner}</details>`;
+  });
+  return html||'<div class="card muted">Keine passenden Inhalte gefunden.</div>';
+}
+
+/* ========== Views ========== */
+const VIEWS={
+  erfassen:{
+    shell(){
+      return `<div id="ibanner"></div><div class="daybar">
+        <button class="btn" data-act="dprev" aria-label="Vorheriger Tag">‹</button>
+        <input type="date" id="d_sel" value="${selDate}" max="${todayISO()}" aria-label="Datum">
+        <button class="btn" data-act="dnext" aria-label="Nächster Tag">›</button>
+        <button class="btn soft" data-act="dtoday">Heute</button>
+      </div>
+      <div class="daysum" id="daysum"></div>
+      <div class="filters cols">
+        <input type="search" id="f_q" placeholder="Suchen (z. B. Intubation, Kinder …)" value="${esc(ef.q)}" aria-label="Suche">
+        <select id="f_cat" aria-label="Kategorie">${catOptions(ef.cat)}</select>
+        <label class="chk"><input type="checkbox" id="f_open"${ef.open?' checked':''}>nur offene</label>
+      </div>
+      <div id="list"></div>`;
+    },
+    fill(){
+      const st=computeStats();
+      const day=S.entries.filter(e=>e.d===selDate);
+      const total=day.reduce((a,e)=>a+e.n,0);
+      const kinds=new Set(day.map(e=>e.i)).size;
+      $('#daysum').innerHTML=`${fmtWD(selDate)}., ${fmtD(selDate)}${selDate===todayISO()?' (heute)':''} · `+(day.length?`<b>${kinds}</b> ${kinds===1?'Inhalt':'Inhalte'}, <b>${total}</b> ${total===1?'Zählung':'Zählungen'} erfasst`:'noch nichts erfasst');
+      $('#list').innerHTML=catBlocks(st,ef,'day');
+      $('#ibanner').innerHTML=installBanner();
+    }
+  },
+  fortschritt:{
+    shell(){
+      return `<div id="banner"></div><div id="overall"></div>
+      <div class="filters cols">
+        <input type="search" id="p_q" placeholder="Suchen …" value="${esc(pf.q)}" aria-label="Suche">
+        <select id="p_cat" aria-label="Kategorie">${catOptions(pf.cat)}</select>
+        <select id="p_status" aria-label="Status">
+          <option value="all"${pf.status==='all'?' selected':''}>Alle</option>
+          <option value="open"${pf.status==='open'?' selected':''}>Nur offene</option>
+          <option value="done"${pf.status==='done'?' selected':''}>Nur erfüllte</option>
+        </select>
+      </div>
+      <div id="list"></div>`;
+    },
+    fill(){
+      const st=computeStats(), a=aggregate(ITEMS,st), ts=timeStats();
+      $('#banner').innerHTML=backupBanner();
+      $('#overall').innerHTML=`<div class="card">
+        <div class="stat"><div><div class="big">${a.pct}%</div><div class="muted small">Gesamtfortschritt Inhalte</div></div>
+          <div style="text-align:right"><div style="font-weight:700">${nf1.format(ts.total)} / ${REQ.total} Monate</div><div class="muted small">Weiterbildungszeit</div></div></div>
+        ${bar(a.pct/100,'lg')}
+        <div class="kv">
+          <div><b>${a.nRd} / ${a.nR}</b>Richtzahlen erfüllt</div>
+          <div><b>${a.nId} / ${a.nI}</b>Inhalte abgezeichnet</div>
+        </div>
+        <p class="tiny muted" style="margin:10px 0 0">Der Prozentwert ist der Durchschnitt über alle ${a.n} Inhalte: Richtzahl-Inhalte zählen anteilig (Ist ÷ Soll, höchstens 100 %), alle anderen sind entweder abgezeichnet oder offen.</p>
+      </div>`;
+      $('#list').innerHTML=catBlocks(st,pf,'prog');
+    }
+  },
+  verlauf:{
+    shell(){
+      return `<div class="filters">
+        <input type="search" id="v_q" placeholder="Suchen (Inhalt oder Notiz) …" value="${esc(vf.q)}" aria-label="Suche">
+        <select id="v_cat" aria-label="Kategorie">${catOptions(vf.cat)}</select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label class="f" for="v_from">von</label><input type="date" id="v_from" value="${vf.from}"></div>
+          <div><label class="f" for="v_to">bis</label><input type="date" id="v_to" value="${vf.to}"></div>
+        </div>
+      </div>
+      <div id="list"></div>`;
+    },
+    fill(){
+      let list=S.entries.map((e,idx)=>({e,idx})).filter(({e})=>{
+        const it=BY[e.i];
+        if(vf.cat&&(!it||it.cat!==vf.cat)) return false;
+        if(vf.from&&e.d<vf.from) return false;
+        if(vf.to&&e.d>vf.to) return false;
+        if(vf.q){const q=vf.q.toLowerCase(); if(!((it&&it.t.toLowerCase().includes(q))||e.note.toLowerCase().includes(q))) return false;}
+        return true;
+      });
+      list.sort((a,b)=>a.e.d<b.e.d?1:a.e.d>b.e.d?-1:b.idx-a.idx);
+      if(!list.length){$('#list').innerHTML='<div class="card muted">Keine Einträge gefunden.</div>';return;}
+      let html='',cur='';
+      list.forEach(({e})=>{
+        if(e.d!==cur){cur=e.d;const tot=list.filter(x=>x.e.d===cur).length;html+=`<div class="dayhead"><span>${fmtWD(cur)}., ${fmtD(cur)}</span><span class="muted small">${tot} Eintr${tot===1?'ag':'äge'}</span></div>`;}
+        const it=BY[e.i];
+        html+=`<div class="entry">
+          <div class="n">${it&&!it.soll?'✓':'×'+e.n}</div>
+          <div><div class="t">${it?`<span class="tag ${it.k}">${it.k}</span>${esc(it.t)}`:'(Inhalt nicht mehr vorhanden)'}</div>
+          <div class="c">${it?esc(CAT_BY[it.cat].title):''}${e.sim?'<span class="pill">Simulation</span>':''}</div>
+          ${e.note?`<div class="c note">„${esc(e.note)}“</div>`:''}</div>
+          <div class="rctl"><button class="btn sm" data-act="ent-edit" data-eid="${e.id}" aria-label="Eintrag bearbeiten">✎</button>
+          <button class="btn sm danger" data-act="ent-del" data-eid="${e.id}" aria-label="Eintrag löschen">🗑</button></div>
+        </div>`;
+      });
+      $('#list').innerHTML=html;
+    }
+  },
+  zeiten:{
+    shell(){
+      return `<div id="summary"></div>
+      <button class="btn pri block" data-act="seg-add" style="margin-bottom:12px">+ Weiterbildungsabschnitt hinzufügen</button>
+      <div id="list"></div>
+      <div class="info">Maßgeblich sind die Zeugnisse und Bescheinigungen der Weiterbildungsbefugten. Die Monate hier sind eine Näherung (1 Monat = 30,44 Tage); Abschnitte ohne Enddatum laufen bis heute.</div>`;
+    },
+    fill(){
+      const ts=timeStats();
+      $('#summary').innerHTML=`<div class="card">
+        <h2>Weiterbildungszeit</h2>
+        <div class="stat"><span class="big">${nf1.format(ts.total)}</span><span>von ${REQ.total} Monaten Anästhesiologie</span></div>
+        ${bar(ts.total/REQ.total,'lg')}
+        <div style="margin-top:14px"><div class="stat" style="margin:0 0 4px"><span>Davon Intensivmedizin (mind. ${REQ.icu})</span><b>${nf1.format(ts.ik)}</b></div>${bar(ts.ik/REQ.icu)}</div>
+        <div style="margin-top:12px"><div class="stat" style="margin:0 0 4px"><span>Andere Gebiete (höchstens ${REQ.other} anrechenbar)</span><b>${nf1.format(ts.ag)}</b></div>${bar(ts.ag/REQ.other)}</div>
+        <p class="small" style="margin:12px 0 0">${ts.remaining>0?`Es fehlen noch <b>${nf1.format(ts.remaining)} Monate</b>`+(ts.ik<REQ.icu?`, davon mindestens <b>${nf1.format(REQ.icu-ts.ik)}</b> in der Intensivmedizin`:'')+'.':'<b class="done-badge">✓ Gesamtzeit erreicht.</b>'+(ts.ik<REQ.icu?` Intensivmedizin: noch ${nf1.format(REQ.icu-ts.ik)} Monate.`:'')}
+        ${ts.remaining>0&&S.segments.length?`<br><span class="muted">Bei lückenloser Fortsetzung frühestens ca. ${new Date(Date.now()+ts.remaining*30.4375*864e5).toLocaleDateString('de-DE',{month:'2-digit',year:'numeric'})}.</span>`:''}</p>
+        ${ts.agRaw>REQ.other?`<p class="tiny muted" style="margin:6px 0 0">Anderes Gebiet: ${nf1.format(ts.agRaw)} Monate erfasst, angerechnet werden höchstens ${REQ.other}.</p>`:''}
+        ${ts.agSmall>0?`<p class="tiny muted" style="margin:6px 0 0">Abschnitte „Anderes Gebiet“ unter 3 Monaten (${nf1.format(ts.agSmall)} Monate) sind nicht eingerechnet (§ 4 Abs. 4 WBO).</p>`:''}
+      </div>`;
+      const segs=S.segments.slice().sort((a,b)=>a.start<b.start?1:-1);
+      if(!segs.length){$('#list').innerHTML='<div class="card muted">Noch keine Abschnitte erfasst.</div>';return;}
+      $('#list').innerHTML=segs.map(sg=>{
+        const m=segMonths(sg);
+        const warn=[];
+        if(sg.type==='ag'&&m<3) warn.push('unter 3 Monaten: nicht anrechenbar');
+        else if(m<6&&m>0) warn.push('unter 6 Monaten: Anrechnung nur, wenn die WBO es vorsieht');
+        if(sg.start>todayISO()) warn.push('liegt in der Zukunft');
+        return `<div class="card">
+          <div class="chead"><h3>${esc(SEG_TYPES[sg.type])}</h3><span class="pct">${nf1.format(m)} Mon.</span></div>
+          <div class="small" style="margin-top:4px">${fmtD(sg.start)} – ${sg.end?fmtD(sg.end):'laufend'}${sg.gap?` · abzgl. ${sg.gap} Tage Unterbrechung`:''}</div>
+          ${sg.dept?`<div class="small muted">Abteilung/Stätte: ${esc(sg.dept)}</div>`:''}
+          ${sg.boss?`<div class="small muted">Weiterbildungsbefugte/r: ${esc(sg.boss)}</div>`:''}
+          ${warn.map(w=>`<div class="pill warn" style="margin:6px 4px 0 0">${esc(w)}</div>`).join('')}
+          <div class="dact"><button class="btn" data-act="seg-edit" data-eid="${sg.id}">Bearbeiten</button><button class="btn danger" data-act="seg-del" data-eid="${sg.id}">Löschen</button></div>
+        </div>`;
+      }).join('');
+    }
+  },
+  daten:{
+    shell(){
+      return `<div id="banner"></div>
+      <div class="card"><h2>Sicherung</h2>
+        <p class="small muted" style="margin-top:0">Alle Daten liegen nur in diesem Browser auf diesem Gerät. Sichere sie regelmäßig als Datei – z. B. in der Cloud oder per E-Mail an dich selbst.</p>
+        <div class="dact" style="margin-top:8px"><button class="btn pri" data-act="exp-json">Sicherung speichern</button><button class="btn" data-act="imp-json">Sicherung laden</button></div>
+        <input type="file" id="imp_file" accept=".json,application/json" hidden>
+        <p class="tiny muted" id="dinfo" style="margin-bottom:0"></p>
+      </div>
+      <div class="card"><h2>Export</h2>
+        <p class="small muted" style="margin-top:0">CSV-Dateien lassen sich direkt in Excel öffnen.</p>
+        <div class="dact" style="margin-top:8px"><button class="btn" data-act="csv-prog">Fortschritt (CSV)</button><button class="btn" data-act="csv-ent">Einträge (CSV)</button><button class="btn" data-act="csv-seg">Zeiten (CSV)</button></div>
+        <div class="dact"><button class="btn soft" data-act="print">Bericht drucken / als PDF speichern</button></div>
+      </div>
+      <div class="card"><h2>Einstellungen</h2>
+        <label class="f" for="s_name">Name (erscheint im Bericht, optional)</label>
+        <input type="text" id="s_name" value="${esc(S.settings.name)}" autocomplete="name">
+        <label class="chk" style="margin-top:8px"><input type="checkbox" id="s_roll"${S.settings.rollup?' checked':''}>Unterpunkte („davon“) zählen zur übergeordneten Richtzahl mit</label>
+        <p class="tiny muted" style="margin:0">Beispiel: Eine Anästhesie bei abdominellem Eingriff zählt zusätzlich zu den 1.800 Anästhesieverfahren.</p>
+      </div>
+      <div class="card"><h2>Hinweise</h2>
+        <p class="small" style="margin-top:0">Quelle: Weiterbildungsordnung für Ärztinnen und Ärzte in Hessen 2020 (WBO 2020), zuletzt geändert am 23. November 2024 – Facharzt Anästhesiologie (S. 27–30) und Allgemeine Inhalte der Weiterbildung für Abschnitt B (S. 20–21).</p>
+        <p class="small">Diese App ist eine <b>persönliche Dokumentationshilfe</b>. Die verbindliche Dokumentation erfolgt im Logbuch der Landesärztekammer Hessen mit mindestens jährlicher Bestätigung durch den Weiterbildungsbefugten (§ 2a Abs. 7, § 8 WBO).</p>
+        <p class="small"><b>K</b> = Kenntnisse (Kognitive und Methodenkompetenz), <b>F</b> = Erfahrungen und Fertigkeiten (Handlungskompetenz).</p>
+        <p class="small" style="margin-bottom:0"><b>Datenschutz:</b> Bitte keine Patientennamen oder -daten in Notizen eintragen. Es werden nur Zähler, Datum und kurze Notizen auf deinem Gerät gespeichert. Die App sendet keine Daten an Dritte und nutzt keine Cookies zur Nachverfolgung.</p>
+        <p class="small"><b>Haftung:</b> Die Inhalte wurden sorgfältig aus der WBO Hessen 2020 übernommen, ersetzen aber nicht den Originaltext. Maßgeblich sind die aktuelle Weiterbildungsordnung und die Vorgaben der Landesärztekammer Hessen. Keine Gewähr für Vollständigkeit und Richtigkeit.</p>
+        <p class="tiny muted" style="margin-bottom:0">Version ${APP_VERSION}</p>
+      </div>
+      <div class="card"><h2>Zurücksetzen</h2>
+        <button class="btn danger" data-act="reset">Alle Daten löschen …</button>
+      </div>`;
+    },
+    fill(){
+      $('#banner').innerHTML=backupBanner()+(storageOK?'':'<div class="banner"><b>Speichern im Browser nicht möglich.</b> Änderungen gehen beim Schließen verloren. Bitte nach jeder Sitzung eine Sicherung speichern oder die Datei in einem anderen Browser öffnen.</div>');
+      $('#dinfo').textContent=`${S.entries.length} Einträge, ${S.segments.length} Abschnitte. Letzte Sicherung: ${S.settings.lastBackup?fmtD(S.settings.lastBackup.slice(0,10)):'noch nie'}.`;
+    }
+  }
+};
+function backupBanner(){return installBanner()+backupBanner0();}
+function backupBanner0(){
+  if(!S.entries.length&&!S.segments.length) return '';
+  const lb=S.settings.lastBackup;
+  const days=lb?Math.floor((Date.now()-new Date(lb).getTime())/864e5):null;
+  if(lb&&days<=14) return '';
+  return `<div class="banner">${lb?`Die letzte Sicherung ist ${days} Tage alt.`:'Du hast noch keine Sicherung gespeichert.'} Daten liegen nur in diesem Browser.<br><button class="btn" data-act="exp-json">Jetzt sichern</button></div>`;
+}
+
+function go(v){
+  view=v;
+  document.querySelectorAll('.tabs button').forEach(b=>{if(b.dataset.view===v) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');});
+  app.innerHTML=VIEWS[v].shell();
+  VIEWS[v].fill();
+  window.scrollTo(0,0);
+}
+function refresh(){
+  const y=window.scrollY;
+  VIEWS[view].fill();
+  window.scrollTo(0,y);
+}
+
+/* ========== Toast ========== */
+let toastTimer=null;
+function toast(msg,undo){
+  const t=$('#toast'); clearTimeout(toastTimer);
+  t.innerHTML=`<div class="t"><span>${esc(msg)}</span>${undo?'<button id="t_undo">Rückgängig</button>':''}</div>`;
+  if(undo) $('#t_undo').onclick=()=>{undo();t.innerHTML='';};
+  toastTimer=setTimeout(()=>{t.innerHTML='';},undo?5000:2800);
+}
+
+/* ========== Dialoge ========== */
+function openDlg(html){const d=$('#dlg');d.innerHTML=`<div class="dbody">${html}</div>`;if(!d.open) d.showModal();return d;}
+function closeDlg(){const d=$('#dlg');if(d.open) d.close();}
+function ask({title,text,buttons}){
+  return new Promise(res=>{
+    const d=$('#dlgc');
+    d.innerHTML=`<div class="dbody"><h2>${esc(title)}</h2><p class="small" style="margin:6px 0 0">${text}</p>
+      <div class="dact">${buttons.map((b,i)=>`<button class="btn ${b.cls||''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+    const done=v=>{d.close();res(v);};
+    d.onclick=ev=>{const b=ev.target.closest('button[data-i]'); if(b) done(buttons[+b.dataset.i].val);};
+    d.oncancel=()=>res(null);
+    d.showModal();
+  });
+}
+
+/* Eintrag anlegen/bearbeiten */
+function entryDialog(itemId,entryId,defDate){
+  const it=BY[itemId], e=entryId?S.entries.find(x=>x.id===entryId):null;
+  if(!it) return;
+  const date=e?e.d:(defDate||selDate);
+  openDlg(`<h2>${e?'Eintrag bearbeiten':'Eintrag erfassen'}</h2>
+    <p class="small" style="margin:4px 0 0"><span class="tag ${it.k}">${it.k}</span>${esc(it.t)}</p>
+    <label class="f" for="e_d">Datum</label>
+    <input type="date" id="e_d" value="${date}" max="${todayISO()}">
+    ${it.soll?`<label class="f" for="e_n">Anzahl</label>
+    <div class="stepper"><button class="btn" data-step="-1" aria-label="weniger">−</button><input type="number" id="e_n" min="1" max="9999" step="1" inputmode="numeric" value="${e?e.n:1}"><button class="btn" data-step="1" aria-label="mehr">+</button></div>`:''}
+    ${it.soll&&it.sim?`<label class="chk"><input type="checkbox" id="e_sim"${e&&e.sim?' checked':''}>durch Simulation (höchstens 50 % der Richtzahl anrechenbar)</label>`:''}
+    <label class="f" for="e_note">Notiz (optional, kurz – keine Patientendaten)</label>
+    <input type="text" id="e_note" maxlength="140" value="${esc(e?e.note:'')}" placeholder="z. B. Kürzel, Verfahren, Lernpunkt">
+    <div class="dact"><button class="btn pri" id="e_save">Speichern</button><button class="btn" id="e_cancel">Abbrechen</button>${e?'<button class="btn danger" id="e_del">Löschen</button>':''}</div>`);
+  const d=$('#dlg');
+  d.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{const i=$('#e_n');i.value=Math.max(1,(parseInt(i.value,10)||1)+(+b.dataset.step));});
+  $('#e_cancel').onclick=closeDlg;
+  $('#e_save').onclick=()=>{
+    const dd=$('#e_d').value; if(!dd){toast('Bitte ein Datum wählen.');return;}
+    if(dd>todayISO()){toast('Das Datum liegt in der Zukunft.');return;}
+    const n=it.soll?Math.floor(Number($('#e_n').value)):1;
+    if(!(n>=1&&n<=9999)){toast('Bitte eine Anzahl von 1 bis 9999 eingeben.');return;}
+    const note=$('#e_note').value.trim().slice(0,140), sim=!!($('#e_sim')&&$('#e_sim').checked);
+    if(e){e.d=dd;e.n=n;e.note=note;e.sim=sim;}
+    else{S.entries.push({id:uid(),d:dd,i:itemId,n,note,sim});}
+    save(); closeDlg();
+    toast(e?'Eintrag geändert':'Eintrag gespeichert'); refreshAll();
+  };
+  if(e) $('#e_del').onclick=async()=>{closeDlg();await deleteEntry(e.id);};
+}
+function refreshAll(){
+  if(view==='erfassen'){const si=$('#d_sel'); if(si) si.value=selDate;}
+  refresh();
+}
+async function deleteEntry(id){
+  const e=S.entries.find(x=>x.id===id); if(!e) return;
+  const it=BY[e.i];
+  const r=await ask({title:'Eintrag löschen?',text:`${esc(fmtD(e.d))}: ${esc(it?it.t:'')}${it&&it.soll?` (×${e.n})`:''}`,buttons:[{label:'Löschen',cls:'danger',val:true},{label:'Abbrechen',val:false}]});
+  if(!r) return;
+  S.entries=S.entries.filter(x=>x.id!==id); save(); toast('Eintrag gelöscht'); refresh();
+}
+
+/* Detailansicht eines Inhalts */
+function detailDialog(itemId){
+  const it=BY[itemId]; if(!it) return;
+  const st=computeStats(), s=st[it.id];
+  const ents=S.entries.filter(e=>e.i===it.id).sort((a,b)=>a.d<b.d?1:-1);
+  let kids='';
+  if(it.children.length){
+    kids=`<h3 class="small" style="margin:14px 0 6px">Unterpunkte</h3>`+it.children.map(c=>{const cs=st[c.id];return `<div class="small" style="padding:6px 0;border-top:1px solid var(--line)">${esc(c.t)}<div class="rmeta">${metaText(c,st)}</div></div>`;}).join('');
+  }
+  openDlg(`<h2>${esc(CAT_BY[it.cat].title)}</h2>
+    <p class="tiny muted" style="margin:0 0 8px">${esc(it.group||'')}${it.group?' · ':''}${KIND[it.k]} · ${esc(CAT_BY[it.cat].ref)}</p>
+    <p style="margin:0 0 8px"><span class="tag ${it.k}">${it.k}</span>${esc(it.t)}</p>
+    <div class="rmeta" style="margin-bottom:6px">${metaText(it,st)}</div>${it.soll?bar(s.frac):''}
+    ${it.soll&&S.settings.rollup&&it.children.length?'<p class="tiny muted" style="margin:6px 0 0">Zählt die Unterpunkte mit.</p>':''}
+    <div class="dact"><button class="btn pri" id="x_add">+ Eintrag${it.soll?'':' (abzeichnen)'}</button><button class="btn" id="x_close">Schließen</button></div>
+    ${kids}
+    <h3 class="small" style="margin:14px 0 6px">Einträge (${ents.length})</h3>
+    ${ents.length?ents.map(e=>`<div class="entry" style="grid-template-columns:1fr auto">
+      <div><div class="t"><b>${fmtD(e.d)}</b>${it.soll?` · ×${e.n}`:''}${e.sim?'<span class="pill">Simulation</span>':''}</div>${e.note?`<div class="c note">„${esc(e.note)}“</div>`:''}</div>
+      <div class="rctl"><button class="btn sm" data-edit="${e.id}" aria-label="Bearbeiten">✎</button><button class="btn sm danger" data-del="${e.id}" aria-label="Löschen">🗑</button></div></div>`).join(''):'<div class="small muted">Noch keine Einträge.</div>'}`);
+  $('#x_close').onclick=closeDlg;
+  $('#x_add').onclick=()=>entryDialog(it.id,null,todayISO());
+  $('#dlg').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>entryDialog(it.id,b.dataset.edit));
+  $('#dlg').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{await deleteEntry(b.dataset.del);if($('#dlg').open) detailDialog(it.id);});
+}
+
+/* Weiterbildungsabschnitt */
+function segDialog(id){
+  const sg=id?S.segments.find(x=>x.id===id):null;
+  openDlg(`<h2>${sg?'Abschnitt bearbeiten':'Weiterbildungsabschnitt'}</h2>
+    <label class="f" for="g_type">Art</label>
+    <select id="g_type">${Object.keys(SEG_TYPES).map(k=>`<option value="${k}"${sg&&sg.type===k?' selected':''}>${esc(SEG_TYPES[k])}</option>`).join('')}</select>
+    <label class="f" for="g_dept">Abteilung / Weiterbildungsstätte</label>
+    <input type="text" id="g_dept" value="${esc(sg?sg.dept:'')}">
+    <label class="f" for="g_boss">Weiterbildungsbefugte/r</label>
+    <input type="text" id="g_boss" value="${esc(sg?sg.boss:'')}">
+    <label class="f" for="g_start">Beginn</label>
+    <input type="date" id="g_start" value="${sg?sg.start:''}">
+    <label class="f" for="g_end">Ende (leer lassen = laufend)</label>
+    <input type="date" id="g_end" value="${sg?sg.end:''}">
+    <label class="f" for="g_gap">Nicht anrechenbare Unterbrechung (Tage)</label>
+    <input type="number" id="g_gap" min="0" max="3650" inputmode="numeric" value="${sg?sg.gap:0}">
+    <p class="tiny muted" style="margin:4px 0 0">Nur Unterbrechungen eintragen, die über 6 Wochen je Kalenderjahr hinausgehen (§ 4 Abs. 4 WBO) – diese Tage werden abgezogen.</p>
+    <div class="dact"><button class="btn pri" id="g_save">Speichern</button><button class="btn" id="g_cancel">Abbrechen</button></div>`);
+  $('#g_cancel').onclick=closeDlg;
+  $('#g_save').onclick=()=>{
+    const o={type:$('#g_type').value,dept:$('#g_dept').value.trim(),boss:$('#g_boss').value.trim(),start:$('#g_start').value,end:$('#g_end').value,gap:Math.max(0,Math.floor(Number($('#g_gap').value)||0))};
+    if(!o.start){toast('Bitte einen Beginn angeben.');return;}
+    if(o.end&&o.end<o.start){toast('Das Ende liegt vor dem Beginn.');return;}
+    if(sg) Object.assign(sg,o); else S.segments.push(Object.assign({id:uid()},o));
+    save(); closeDlg(); toast('Abschnitt gespeichert'); refresh();
+  };
+}
+
+/* ========== Export / Import ========== */
+async function saveFile(name,mime,content){
+  try{
+    if(isIOS()&&navigator.share&&navigator.canShare){
+      const file=new File([content],name,{type:mime});
+      if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name}); return true;}
+    }
+  }catch(e){ if(e&&e.name==='AbortError') return false; }
+  try{
+    const blob=new Blob([content],{type:mime}), a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500); return true;
+  }catch(e){toast('Speichern nicht möglich.');return false;}
+}
+function csv(rows){return '﻿'+rows.map(r=>r.map(v=>{v=String(v==null?'':v);return /[;"\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(';')).join('\r\n');}
+async function exportJSON(){
+  const stamp=new Date().toISOString();
+  const o=Object.assign({exported:stamp,appVersion:APP_VERSION},S,{settings:Object.assign({},S.settings,{lastBackup:stamp})});
+  const ok=await saveFile(`weiterbildung-anaesthesiologie-sicherung-${todayISO()}.json`,'application/json',JSON.stringify(o,null,1));
+  if(ok){S.settings.lastBackup=stamp; save(); toast('Sicherung gespeichert'); refresh();}
+}
+function exportCsvProg(){
+  const st=computeStats(); const rows=[['Kategorie','Gruppe','Art','Inhalt','Ebene','Richtzahl (Soll)','Ist','Fehlt','Status','Erstmals','Zuletzt']];
+  ITEMS.forEach(it=>{const s=st[it.id];rows.push([CAT_BY[it.cat].title,it.group,KIND[it.k],it.t,it.level?'Unterpunkt':'',it.soll||'',it.soll?s.ist:(s.done?'abgezeichnet':''),it.soll?s.fehlt:'',s.done?'erfüllt':'offen',fmtD(s.first),fmtD(s.last)]);});
+  saveFile(`weiterbildung-fortschritt-${todayISO()}.csv`,'text/csv;charset=utf-8',csv(rows));
+}
+function exportCsvEnt(){
+  const rows=[['Datum','Kategorie','Inhalt','Anzahl','Simulation','Notiz']];
+  S.entries.slice().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0).forEach(e=>{const it=BY[e.i];rows.push([fmtD(e.d),it?CAT_BY[it.cat].title:'',it?it.t:e.i,e.n,e.sim?'ja':'',e.note]);});
+  saveFile(`weiterbildung-eintraege-${todayISO()}.csv`,'text/csv;charset=utf-8',csv(rows));
+}
+function exportCsvSeg(){
+  const rows=[['Art','Abteilung/Weiterbildungsstätte','Weiterbildungsbefugte/r','Beginn','Ende','Unterbrechung (Tage)','Monate (Näherung)']];
+  S.segments.slice().sort((a,b)=>a.start<b.start?-1:1).forEach(g=>rows.push([SEG_TYPES[g.type],g.dept,g.boss,fmtD(g.start),g.end?fmtD(g.end):'laufend',g.gap||'',nf1.format(segMonths(g))]));
+  saveFile(`weiterbildung-zeiten-${todayISO()}.csv`,'text/csv;charset=utf-8',csv(rows));
+}
+function printReport(){
+  const st=computeStats(), ts=timeStats(), a=aggregate(ITEMS,st);
+  let h=`<h1>Weiterbildung Anästhesiologie – Fortschrittsbericht</h1>
+  <div>${S.settings.name?esc(S.settings.name)+' · ':''}Stand: ${fmtD(todayISO())} · WBO Hessen 2020 (zuletzt geändert 23.11.2024)</div>
+  <div>Gesamtfortschritt Inhalte: <b>${a.pct}%</b> · Richtzahlen erfüllt: ${a.nRd}/${a.nR} · Inhalte abgezeichnet: ${a.nId}/${a.nI}</div>
+  <h2>Weiterbildungszeit</h2>
+  <div>Gesamt angerechnet: <b>${nf1.format(ts.total)}</b> von ${REQ.total} Monaten · Intensivmedizin: ${nf1.format(ts.ik)} von mind. ${REQ.icu} Monaten · Andere Gebiete (angerechnet): ${nf1.format(ts.ag)} von höchstens ${REQ.other} Monaten</div>`;
+  if(S.segments.length){
+    h+=`<table><tr><th>Art</th><th>Abteilung / Stätte</th><th>Weiterbildungsbefugte/r</th><th>Beginn</th><th>Ende</th><th class="r">Monate</th></tr>`+
+      S.segments.slice().sort((x,y)=>x.start<y.start?-1:1).map(g=>`<tr><td>${esc(SEG_TYPES[g.type])}</td><td>${esc(g.dept)}</td><td>${esc(g.boss)}</td><td>${fmtD(g.start)}</td><td>${g.end?fmtD(g.end):'laufend'}</td><td class="r">${nf1.format(segMonths(g))}</td></tr>`).join('')+'</table>';
+  }
+  CATS.forEach(c=>{
+    const ca=aggregate(c.items,st);
+    h+=`<h2>${esc(c.title)} <span style="font-weight:400;font-size:9pt">(${ca.pct}% · ${esc(c.ref)})</span></h2><table><tr><th>Inhalt</th><th>Art</th><th class="r">Soll</th><th class="r">Ist</th><th>Status</th></tr>`;
+    c.items.forEach(it=>{const s=st[it.id];
+      h+=`<tr class="${it.level?'sub':''}"><td>${esc(it.t)}</td><td>${it.k}</td><td class="r">${it.soll?nf0.format(it.soll):''}</td><td class="r">${it.soll?nf0.format(s.ist):''}</td><td>${s.done?(it.soll?'erfüllt':'abgezeichnet '+fmtD(s.first)):(it.soll?'noch '+nf0.format(s.fehlt):'offen')}</td></tr>`;});
+    h+='</table>';
+  });
+  h+=`<p style="font-size:8.5pt">Persönliche Dokumentationshilfe; die verbindliche Dokumentation erfolgt im Logbuch der Landesärztekammer Hessen. K = Kenntnisse, F = Erfahrungen und Fertigkeiten.</p>
+  <div class="sig"><div>Datum</div><div>Unterschrift Weiterzubildende/r</div><div>Unterschrift Weiterbildungsbefugte/r</div></div>`;
+  $('#report').innerHTML=h;
+  window.print();
+}
+async function importJSON(file){
+  let o; try{o=JSON.parse(await file.text());}catch(e){toast('Die Datei konnte nicht gelesen werden.');return;}
+  if(!o||o.app!==APP_ID||!Array.isArray(o.entries)){toast('Das ist keine gültige Sicherungsdatei dieser App.');return;}
+  const inc=norm(o);
+  const r=await ask({title:'Sicherung laden',text:`Die Datei enthält <b>${inc.entries.length}</b> Einträge und <b>${inc.segments.length}</b> Abschnitte. Aktuell vorhanden: ${S.entries.length} Einträge, ${S.segments.length} Abschnitte.<br><br><b>Ersetzen</b> überschreibt alle aktuellen Daten. <b>Zusammenführen</b> ergänzt nur, was hier noch fehlt.`,
+    buttons:[{label:'Zusammenführen',cls:'pri',val:'merge'},{label:'Ersetzen',cls:'danger',val:'replace'},{label:'Abbrechen',val:null}]});
+  if(!r) return;
+  if(r==='replace'){inc.settings.lastBackup=S.settings.lastBackup; S=inc;}
+  else{
+    const ids=new Set(S.entries.map(e=>e.id)), sids=new Set(S.segments.map(s=>s.id));
+    inc.entries.forEach(e=>{if(!ids.has(e.id)) S.entries.push(e);});
+    inc.segments.forEach(s=>{if(!sids.has(s.id)) S.segments.push(s);});
+  }
+  save(); toast('Sicherung geladen'); go('daten');
+}
+
+/* ========== Ereignisse ========== */
+document.addEventListener('click',async ev=>{
+  const el=ev.target.closest('[data-act]'); if(!el) return;
+  const act=el.dataset.act, id=el.dataset.id, eid=el.dataset.eid;
+  switch(act){
+    case 'go': go(el.dataset.view); break;
+    case 'dprev': selDate=addDays(selDate,-1); $('#d_sel').value=selDate; refresh(); break;
+    case 'dnext': if(selDate<todayISO()){selDate=addDays(selDate,1); $('#d_sel').value=selDate; refresh();} break;
+    case 'dtoday': selDate=todayISO(); $('#d_sel').value=selDate; refresh(); break;
+    case 'inc': {
+      const e={id:uid(),d:selDate,i:id,n:1,note:'',sim:false}; S.entries.push(e); save(); refresh();
+      toast('+1 · '+BY[id].t.slice(0,48)+(BY[id].t.length>48?'…':''),()=>{S.entries=S.entries.filter(x=>x.id!==e.id);save();refresh();});
+      break;}
+    case 'dec': {
+      const mine=S.entries.filter(e=>e.i===id&&e.d===selDate); const last=mine[mine.length-1]; if(!last) break;
+      const snap=Object.assign({},last);
+      if(last.n>1) last.n--; else S.entries=S.entries.filter(x=>x.id!==last.id);
+      save(); refresh();
+      toast('−1',()=>{const cur=S.entries.find(x=>x.id===snap.id); if(cur) cur.n=snap.n; else S.entries.push(snap); save(); refresh();});
+      break;}
+    case 'tog': {
+      const mine=S.entries.filter(e=>e.i===id&&e.d===selDate);
+      if(mine.length){const snap=mine.slice(); S.entries=S.entries.filter(e=>!(e.i===id&&e.d===selDate)); save(); refresh(); toast('Abzeichnung entfernt',()=>{S.entries.push(...snap);save();refresh();});}
+      else{const e={id:uid(),d:selDate,i:id,n:1,note:'',sim:false}; S.entries.push(e); save(); refresh(); toast('Abgezeichnet · '+fmtD(selDate),()=>{S.entries=S.entries.filter(x=>x.id!==e.id);save();refresh();});}
+      break;}
+    case 'more': entryDialog(id,null,selDate); break;
+    case 'detail': detailDialog(id); break;
+    case 'ent-edit': entryDialog(S.entries.find(e=>e.id===eid).i,eid); break;
+    case 'ent-del': deleteEntry(eid); break;
+    case 'seg-add': segDialog(); break;
+    case 'seg-edit': segDialog(eid); break;
+    case 'seg-del': {
+      const r=await ask({title:'Abschnitt löschen?',text:'Der Weiterbildungsabschnitt wird aus der Liste entfernt.',buttons:[{label:'Löschen',cls:'danger',val:true},{label:'Abbrechen',val:false}]});
+      if(r){S.segments=S.segments.filter(s=>s.id!==eid);save();toast('Abschnitt gelöscht');refresh();}
+      break;}
+    case 'exp-json': exportJSON(); break;
+    case 'imp-json': $('#imp_file').click(); break;
+    case 'csv-prog': exportCsvProg(); break;
+    case 'csv-ent': exportCsvEnt(); break;
+    case 'csv-seg': exportCsvSeg(); break;
+    case 'install': if(deferredPrompt){deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){} deferredPrompt=null; renderInstall();} break;
+    case 'inst-hide': lsSet('wb_inst_dismissed','1'); renderInstall(); break;
+    case 'print': printReport(); break;
+    case 'reset': {
+      const r=await ask({title:'Wirklich alles löschen?',text:'Alle Einträge, Abschnitte und Einstellungen werden unwiderruflich entfernt. Speichere vorher eine Sicherung, falls du die Daten noch brauchst.',buttons:[{label:'Alles löschen',cls:'danger',val:true},{label:'Abbrechen',val:false}]});
+      if(r){S=fresh();save();toast('Alle Daten gelöscht');go('daten');}
+      break;}
+  }
+});
+document.addEventListener('keydown',ev=>{
+  if((ev.key==='Enter'||ev.key===' ')&&ev.target.matches&&ev.target.matches('[role="button"][data-act="detail"]')){ev.preventDefault();ev.target.click();}
+});
+document.addEventListener('input',ev=>{
+  const t=ev.target;
+  switch(t.id){
+    case 'f_q': ef.q=t.value.trim(); refresh(); break;
+    case 'p_q': pf.q=t.value.trim(); refresh(); break;
+    case 'v_q': vf.q=t.value.trim(); refresh(); break;
+    case 's_name': S.settings.name=t.value; save(); break;
+  }
+});
+document.addEventListener('change',ev=>{
+  const t=ev.target;
+  switch(t.id){
+    case 'd_sel': if(t.value&&t.value<=todayISO()){selDate=t.value;refresh();} else {t.value=selDate;} break;
+    case 'f_cat': ef.cat=t.value; refresh(); break;
+    case 'f_open': ef.open=t.checked; refresh(); break;
+    case 'p_cat': pf.cat=t.value; refresh(); break;
+    case 'p_status': pf.status=t.value; refresh(); break;
+    case 'v_cat': vf.cat=t.value; refresh(); break;
+    case 'v_from': vf.from=t.value; refresh(); break;
+    case 'v_to': vf.to=t.value; refresh(); break;
+    case 's_roll': S.settings.rollup=t.checked; save(); toast(t.checked?'Unterpunkte zählen mit':'Unterpunkte zählen nicht mit'); break;
+    case 'imp_file': if(t.files[0]) importJSON(t.files[0]); t.value=''; break;
+  }
+});
+document.addEventListener('toggle',ev=>{
+  const d=ev.target; if(!d.matches||!d.matches('details.cat')) return;
+  if(d.open) openCats.add(d.dataset.key); else openCats.delete(d.dataset.key);
+},true);
+$('#dlg').addEventListener('click',ev=>{if(ev.target===ev.currentTarget) closeDlg();});
+$('#dlg').addEventListener('close',()=>{ if(view!=='daten') refresh(); });
+
+/* Start */
+go('erfassen');
+})();
+if('serviceWorker' in navigator && /^https?:/.test(location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+</script>
+</body>
+</html>
