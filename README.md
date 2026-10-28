@@ -2,7 +2,7 @@
 
 Persönliche Dokumentationshilfe für die Facharztweiterbildung **Anästhesiologie** nach der **Weiterbildungsordnung für Ärztinnen und Ärzte in Hessen 2020** (zuletzt geändert am 23.11.2024). Funktioniert auf iPhone, Android und am Computer, ohne Account und ohne Installation aus einem App-Store.
 
-**App öffnen:** https://BENUTZERNAME.github.io/weiterbildung-logbuch/
+**App öffnen:** https://unharmonymelody-dot.github.io/weiterbildung-logbuch/
 
 ## Was die App kann
 
